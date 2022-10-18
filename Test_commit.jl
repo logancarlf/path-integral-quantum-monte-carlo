@@ -1,5 +1,6 @@
 using Plots
 using Random
+using Statistics
 
 
 function Lagrangian(x0, x1, m, omega, delta_tau) 
@@ -17,7 +18,7 @@ function Total_Action(x, m, omega, beta, N, delta_tau)
 end
 
 
-function Metropolis_Update(x, N, h, id_rate)
+function Metropolis_Update(x, h)
 
     """
     Metropolis_Update performs a single iteration of the Metropolis update
@@ -59,8 +60,44 @@ function Metropolis_Update(x, N, h, id_rate)
     # New h, Note errors when acceptance_ratio = 0
     h = h * acceptance_ratio/id_rate 
     
-
     return x, h
+end
+
+
+function Collect_Thermalised_Paths(x, h, N_thermal, N_paths, N_sweep)
+
+    thermalised_path_collection = []
+
+    for i in 1:N_thermal
+        x, h = Metropolis_Update(x, h)
+    end
+
+    thermal_x = x
+    thermal_h = h
+
+    for i in 1:N_paths
+
+        x = thermal_x
+        h = 0.1 # thermal_h
+
+        for j in 1:N_sweep
+            x, h = Metropolis_Update(x, h)
+        end
+        push!(thermalised_path_collection, x)
+    end
+    return collect(Iterators.flatten(thermalised_path_collection))
+end
+
+
+function Wavefunction_Test(x, h)
+
+    path_collection = Collect_Thermalised_Paths(x, h, 100, 10000, 12)
+
+    print(mean(path_collection))
+
+    hist = histogram(path_collection, bins=200, normed = true, xlim=(-2, 2))
+    display(hist)
+
 end
 
 
@@ -74,12 +111,22 @@ id_rate = 0.8
 x = zeros(N)
 delta_tau = beta/ N
 
+#=
 # Test Lagrangian and Total Action
 total_action = Total_Action(x, m, omega, beta, N)
-print("Total Action of Harmonic Lagrangian:", total_action, "\n")
+print("Testing Action of Harmonic Lagrangian:", "\n")
+print(total_action, "\n")
 
 # Test Metropolis Metropolis_Update
 update = Metropolis_Update(x, N, h, id_rate)
-print(update)
+print("\nTesting Metropolis Update:", "\n")
+print(update, "\n")
 
-print("\n")
+# Test Collecting Thermal Paths
+thermal_paths = Collect_Thermalised_Paths(x, h, 100, 3, 12)
+print("\nTesting Collecting Thermal Paths:", "\n")
+print(thermal_paths, "\n")
+=#
+
+# Test Against Wavefunction
+Wavefunction_Test(x, h)
