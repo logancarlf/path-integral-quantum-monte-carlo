@@ -2,9 +2,6 @@ using Plots
 using Random
 using Statistics
 
-import PyPlot as plt
-
-
 function Lagrangian(x0, x1, m, omega, delta_tau)
 
     """
@@ -166,7 +163,7 @@ function Wavefunction_Test(x, h)
     """
 
     # Produce data from thermalised paths
-    path_collection = Collect_Thermalised_Paths(x, h, 100, 1000, 10)
+    path_collection = Collect_Thermalised_Paths(x, h, 100, 1000, 15)
 
     # Print average position
     print("Average Position:", mean(path_collection))
@@ -185,8 +182,8 @@ end
 
 m = 1
 h = 0.5
-N = 3000
-beta = 1500
+N = 4000
+beta = 2000
 omega = 1
 id_rate = 0.8
 
