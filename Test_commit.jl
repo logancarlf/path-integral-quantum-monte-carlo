@@ -2,9 +2,32 @@ using Plots
 using Random
 using Statistics
 
+import PyPlot as plt
 
-function Lagrangian(x0, x1, m, omega, delta_tau) 
-    L = 0.5 * m * (((x1 - x0)/delta_tau)^2) + (m * omega^2 * x0^2) 
+
+function Lagrangian(x0, x1, m, omega, delta_tau)
+
+    """
+    Lagrangian for the quantum Harmonic oscillator where hbar
+    has been set to 1.
+
+    Inputs:
+    x0: [Float]
+        Position of the bead of interest.
+    x1: [Float]
+        Position of the bead after that of interest in the chain.
+    m: [Float]
+        Mass of the particle expericing HM.
+    omega: [Float]
+        Frequency of the harmonic potential.
+    delta_tau:[Float]
+        Distance between beads in imaginary time.
+
+    Returns:
+    L: [Float]
+        The Lagrangian of the bead at x0
+    """
+    L = 0.5 * m * (((x1 - x0)/delta_tau)^2) + (0.5 * m * omega^2 * x0^2) 
     return L
 end  
 
@@ -25,13 +48,18 @@ function Metropolis_Update(x, h)
     to converge the markov chain to new positions.
 
     Inputs:
-    x: [Array] Positions of the markov beads before the update
-    h: [Float] Size of the new change of the beads
-    N: [Int] Number of markov beads
+    x: [Array]
+        Positions of the markov beads before the update
+    h: [Float]
+        Size of the new change of the beads
+    N: [Int]
+        Number of markov beads
 
     Returns:
-    new_x: [Array] New posiiton of the beads in the markov chain
-    h: new h based on the number of accepted position changes
+    new_x: [Array] 
+        New posiiton of the beads in the markov chain
+    h: [Float]
+        new h based on the number of accepted position changes
     """
 
     acceptance_ratio = 0
@@ -66,17 +94,47 @@ end
 
 function Collect_Thermalised_Paths(x, h, N_thermal, N_paths, N_sweep)
 
-    thermalised_path_collection = []
+    """
+    Produces a flattened array of positions of markov beads produced
+    from N_thermal iterations of the Metropolis_Update, followed by 
+    N_path number of N_sweep iterations that allows for a variation
+    in the distribution
 
+    Inputs:
+    x: [Array]
+        Initial position of markov beads.
+    h: [Float]
+        Size of change in Metropolis update.
+    N_thermal: [Int] Number of initial iterations of Metropolis to 
+        produce a viable thermal path.
+    N_paths: [Int]
+        Number of paths wanted to collect.
+    N_sweep: [Int]
+        Number of Metropolis Updates after the initial sweep to be
+        ungone by the N_path paths.
+
+    Returns:
+    paths: [Array]
+        Collection of positions of beads on the thermal path
+    
+    """
+    
+    # Array to store paths
+    thermalised_path_collection = []
+    
+    # Thermalise the paths through Metropolis
     for i in 1:N_thermal
         x, h = Metropolis_Update(x, h)
     end
 
+    # Store solutions to reuse
     thermal_x = x
     thermal_h = h
 
+    # Perforn N_sweep more sweeps on the thermalised path
     for i in 1:N_paths
 
+        # For each new path, reuse original thermalsied path
         x = thermal_x
         h = 0.1 # thermal_h
 
@@ -91,20 +149,44 @@ end
 
 function Wavefunction_Test(x, h)
 
-    path_collection = Collect_Thermalised_Paths(x, h, 100, 10000, 12)
+    """
+    Test the position wavefunction for the ground state of the
+    quantum harmonic oscillator produced by the PIMC method and
+    the analytical solution.
 
-    print(mean(path_collection))
+    Inputs:
+    x: [Array]
+        Initial position of markov beads.
+    h: [Float]
+        Size of change in Metropolis update.
 
-    hist = histogram(path_collection, bins=200, normed = true, xlim=(-2, 2))
+    Returns:
+    - Plot of the simulated wavefunction against the analytical
+    - A value for the exectation value of positon (expected zero)
+    """
+
+    # Produce data from thermalised paths
+    path_collection = Collect_Thermalised_Paths(x, h, 100, 1000, 10)
+
+    # Print average position
+    print("Average Position:", mean(path_collection))
+
+    # Plot histogram of position of beads on the path
+    hist = histogram(path_collection, bins=30, norm=true, xlim=(-3,3), label="PIMC")
+    
+    # Plot the analytical solution
+    x = -3:0.01:3
+    psi0 = exp.(-(x.^2))/sqrt(pi)
+    plot!(x,psi0,label="Analytical",grid=false)
+
     display(hist)
-
 end
 
 
 m = 1
 h = 0.5
-N = 120
-beta = 100
+N = 3000
+beta = 1500
 omega = 1
 id_rate = 0.8
 
