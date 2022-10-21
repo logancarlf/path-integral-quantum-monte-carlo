@@ -2,6 +2,9 @@ using Plots
 using Random
 using Statistics
 
+import PyPlot as plt
+
+
 function Lagrangian(x0, x1, m, omega, delta_tau)
 
     """
@@ -14,7 +17,7 @@ function Lagrangian(x0, x1, m, omega, delta_tau)
     x1: [Float]
         Position of the bead after that of interest in the chain.
     m: [Float]
-        Mass of the particle expericing HM.
+        Mass of the particle experiencing HM.
     omega: [Float]
         Frequency of the harmonic potential.
     delta_tau:[Float]
