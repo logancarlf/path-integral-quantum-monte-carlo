@@ -32,7 +32,7 @@ function Lagrangian(x0, x1, x2, m, omega, delta_tau)
     return L
 end  
 
-
+#=
 function Total_Action(x, m, omega, beta, N, delta_tau)
     S = 0
     for i in 1:N
@@ -40,7 +40,24 @@ function Total_Action(x, m, omega, beta, N, delta_tau)
     return S
     end
 end
+=#
+function Hamiltonian(x)
 
+    """
+    Calculate the energy of the system
+
+    Inputs:
+    x: [Array]
+        Positions of the markov beads after final update
+    """
+    H = 0
+    len = length(x)
+    for i in 1:len-1
+        H += 3/2/delta_tau - (0.5 * m * (((x[i+1] - x[i])/delta_tau)^2)) + (0.5 * m * omega^2 * x[i+1]^2) 
+    end
+    H += 3/2/delta_tau - (0.5 * m * (((x[1] - x[len])/delta_tau)^2)) + (0.5 * m * omega^2 * x[1]^2)
+    return H/len
+end
 
 function Metropolis_Update(x, h)
 
@@ -123,6 +140,7 @@ function Collect_Thermalised_Paths(x, h, N_thermal, N_paths, N_sweep)
     
     # Array to store paths
     thermalised_path_collection = []
+    H_array = []
     
     # Thermalise the paths through Metropolis
     for i in 1:N_thermal
@@ -136,7 +154,7 @@ function Collect_Thermalised_Paths(x, h, N_thermal, N_paths, N_sweep)
     # Perforn N_sweep more sweeps on the thermalised path
     Threads.@threads for i in 1:N_paths # Using different threads to speed up
     # for i in 1:N_paths
-        println("i = $i on thread $(Threads.threadid())")
+        # println("i = $i on thread $(Threads.threadid())")
         # For each new path, reuse original thermalsied path
         x = thermal_x
         h = 0.1 # thermal_h
@@ -144,9 +162,12 @@ function Collect_Thermalised_Paths(x, h, N_thermal, N_paths, N_sweep)
         for j in 1:N_sweep
             x, h = Metropolis_Update(x, h)
         end
+        H = Hamiltonian(x)
+
+        push!(H_array, H)
         push!(thermalised_path_collection, x)
     end
-    return collect(Iterators.flatten(thermalised_path_collection))
+    return collect(Iterators.flatten(thermalised_path_collection)), H_array
 end
 
 
@@ -169,13 +190,17 @@ function Wavefunction_Test(x, h)
     """
 
     # Produce data from thermalised paths
-    path_collection = Collect_Thermalised_Paths(x, h, 100, 1000, 12)
-
+    path_collection, H_array = Collect_Thermalised_Paths(x, h, 100, 2000, 12)
+    
+    # Print H_array
+    println("H is: ", H_array)
+    
     # Print average position
-    print("Average Position:", mean(path_collection))
+    print("Average Position: ", mean(path_collection))
+    println("Average Energy: ", mean(H_array))
 
     # Plot histogram of position of beads on the path
-    hist = histogram(path_collection, bins=200, norm=true, xlim=(-3,3), label="PIMC")
+    hist = histogram(path_collection, bins=150, norm=true, xlim=(-3,3), label="PIMC")
     
     # Plot the analytical solution
     x = -3:0.01:3
@@ -214,7 +239,7 @@ print(thermal_paths, "\n")
 =#
 
 # Test Against Wavefunction
-Wavefunction_Test(x, h)
+@time Wavefunction_Test(x, h)
 
 
 
