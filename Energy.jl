@@ -238,6 +238,11 @@ function Collect_Thermalised_Paths(x, h, N_thermal, N_paths, N_sweep)
         x, h = Metropolis_Update(x, h, false)
     end
 
+    anime_plot = Plots.plot(x, delta_tau .* range(1, N), shape=:circle, labels="beads")
+    xlabel!("x")
+    ylabel!("imaginary time")
+    xlims!(-2, 2)
+    display(anime_plot)
     # Store solutions to reuse
     thermal_x = x
     thermal_h = h
@@ -257,6 +262,11 @@ function Collect_Thermalised_Paths(x, h, N_thermal, N_paths, N_sweep)
             x, h, virial_energy, thermo_energy = Metropolis_Update(x, h, true)
             push!(virial_energy_array_per_step, virial_energy)
             push!(thermo_energy_array_per_step, thermo_energy)
+            anime_plot = Plots.plot(x, delta_tau .* range(1, N), shape=:circle, labels="beads")
+            xlabel!("x")
+            ylabel!("imaginary time")
+            xlims!(-2, 2)
+            display(anime_plot)
 
             if j == N_sweep
                 # Record the mean energy of each path respectively, where each experience N_sweep averaging
@@ -292,7 +302,7 @@ function Wavefunction_Test(x, h)
     """
 
     # Produce data from thermalised paths
-    path_collection, H_array_virial, H_array_thermo = Collect_Thermalised_Paths(x, h, 100, 100, 20)
+    path_collection, H_array_virial, H_array_thermo = Collect_Thermalised_Paths(x, h, 100, 1, 100)
     
     # Print virial_energy and thermo_energy for the beta afetr averaging among N_paths
     println("Average virial energy:", mean(H_array_virial))
@@ -320,7 +330,7 @@ end
 # Plotting of Energy estimator
 T_arr = LinRange(0.0001, 1, 10)
 T_arr = [0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
-# T_arr = [0.1]
+T_arr = [0.005]
 Beta_arr = 1 ./ T_arr
 
 # Setting of parameters, note that transforming m and omega into "unitless" concept
@@ -339,6 +349,7 @@ measured_energy_thermo = []
 
 for i in eachindex(Beta_arr)
 
+    
     println("beta element is ", Beta_arr[i])
     global beta = Beta_arr[i]
     #=
@@ -354,6 +365,7 @@ for i in eachindex(Beta_arr)
 
     # Test Against Wavefunction
     global estimate_energy_virial, estimate_energy_thermo = @time Wavefunction_Test(init_pos, h)
+    global anime_plot = Plots.plot()
     push!(measured_energy_virial, estimate_energy_virial)
     push!(measured_energy_thermo, estimate_energy_thermo)
 end
