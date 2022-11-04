@@ -309,6 +309,9 @@ function Wavefunction_Test(x, h)
     x = -3:0.01:3
     psi0 = exp.(-(m*omega/hbar*x.^2))/sqrt(pi) * sqrt(m*omega/hbar)
     plot!(x,psi0,label="Analytical",grid=false)
+    title!("Probability Distribution of x \n β = $(beta), N = $(N)")
+    xlabel!("x")
+    ylabel!("frequency")
     display(hist)
 
     return mean(H_array_virial), mean(H_array_thermo)
@@ -317,6 +320,7 @@ end
 # Plotting of Energy estimator
 T_arr = LinRange(0.0001, 1, 10)
 T_arr = [0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+# T_arr = [0.1]
 Beta_arr = 1 ./ T_arr
 
 # Setting of parameters, note that transforming m and omega into "unitless" concept
